@@ -33,3 +33,6 @@ One Tag will be attached to the robot and a triangle will be established between
 Second (Two Pozyx Tag) :
 
 One Tag and one anchor will be attached to the robot and two triangle will be established between the four sensors. The distance between the anchor and the tag will also be a set distance that can be used for calculating values
+
+9/23/2019, David Klett:
+Our goal is to have nice wrapper library (PozyxWrapper) to interface nicely with the Pozyx system.  
