@@ -42,8 +42,8 @@ class PozyxWrapper
         uint32_t getDeviceRightDistance();	//Needs written under .cpp
         uint32_t getRemoteLeftDistance();	//Needs written under .cpp
         uint32_t getRemoteRightDistance();	//Needs written under .cpp
+		bool isWithinFloat(double, double, double);	//add to .cpp
 		void printXYposition();
-        
 		
     private:
         uint16_t leftAnchorBeaconAddress;
