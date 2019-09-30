@@ -1,0 +1,139 @@
+
+Pozyx library functions previously implemented, and either shifted to the new PozyxWrapper library or removed entirely.
+
+
+
+
+
+
+
+//void calibrateGyro()
+// {
+//   long sumY = 0;
+//   for(int i = 0; i< Samples; i++)
+//   {
+//     Pozyx.regRead(POZYX_GYRO_X, (uint8_t*)&gyro_raw, 3*sizeof(int16_t));
+//     sumY += gyro_raw[1];
+//     //Keep track of the highest values
+    
+//     if(gyro_raw[1]>highG_y)      highG_y=gyro_raw[1];
+//     //Keep track of the lowest values
+//     if(gyro_raw[1]<lowG_y)       lowG_y=gyro_raw[1];
+   
+//   }
+//   offsetG_Y = sumY / Samples;
+//   highG_y -= offsetG_Y;
+//   lowG_y  -= offsetG_Y;
+}
+
+
+void PozyxWrapper::printStatus()
+{
+#ifdef DEBUG
+  if (deviceLeftStatus == POZYX_SUCCESS && deviceRightStatus == POZYX_SUCCESS)
+    {
+      Serial.print("Range: ");
+      Serial.print("\tLeft ");
+      Serial.print(getBuffAvg(DistanceVals1));
+      Serial.print("\tRight ");
+      Serial.print(getBuffAvg(DistanceVals2));
+      Serial.print(" ");
+      Serial.print(" ");
+      Serial.print("X pos: ");
+      Serial.print(device_pos.X);
+      Serial.print(" ");
+      Serial.print("Y pos: ");
+      Serial.print(device_pos.Y);
+      Serial.println(" ");
+    }
+    else{
+        Serial.print("device error, connection to left and/or right anchor error");
+      }
+    //Check if we're using two pozyx tags on the robot:
+#ifdef DUAL_POZYX
+    if (remoteLeftStatus == POZYX_SUCCESS && remoteRightStatus == POZYX_SUCCESS)
+    {
+      Serial.print("Remote: ");
+      Serial.print("Left: ");
+      Serial.print(getBuffAvg(DistanceVals3));
+      Serial.print("Right: ");
+      Serial.print(getBuffAvg(DistanceVals4));
+      Serial.print(" ");
+      Serial.print("X pos: ");
+      Serial.print(remote_pos.X);
+      Serial.print(" ");
+      Serial.print("Y pos: ");
+      Serial.print(remote_pos.Y);
+      Serial.print(" ");
+      Serial.print("Heading: ");
+      Serial.println(heading);
+    }
+#endif
+#endif
+}
+
+void PozyxWrapper::printXYposition()
+{
+#ifdef XYpos
+  Serial.print("Device X: ");
+  Serial.print(device_pos.X);
+  Serial.print("  Y: ");
+  Serial.println(device_pos.Y);
+  Serial.print("Remote X: ");
+  Serial.print(remote_pos.X);
+  Serial.print("  Y: ");
+  Serial.println(remote_pos.Y);
+  Serial.print("Center X: ");
+  Serial.print(center.X);
+  Serial.print(" Y: ");
+  Serial.println(center.Y);
+#endif
+}
+
+
+
+double calculateY1Position()
+{
+  double d = deviceLeftRange.distance;  
+  double b = deviceRightRange.distance;
+  double u = ANCHORDISPLACEMENT;
+  return ((d*d) - (b*b) + (u*u))/(2*u);
+}
+
+double calculateY2Position()
+{
+  double a = remoteRightRange.distance;
+  double c = remoteLeftRange.distance;
+  double u = ANCHORDISPLACEMENT;
+  return ((c*c)-(a*a)+(u*u))/(2*u);
+}
+
+unsigned long powerOfTwo(unsigned long x)
+{
+  return x*x;  
+}
+
+double lawOfCOS( uint32_t a, uint32_t b, uint32_t c)
+{
+/*                c
+ *       A *-----------* B      Cos(C) = (a^2 + b^2 -c^2)/(2*a*b)
+ *          \         /         Cos(A) = (b^2 + c^2 -a^2)/(2*b*c)
+ *           \       /          Cos(B) = (c^2 + a^2 -b^2)/(2*c*a)
+ *          b \     /  a
+ *             \   /
+ *              \ /
+ *               C
+ */           
+  long num = (a*a) + (b*b) - (c*c);
+  long  den = (2*a*b);
+
+   return acos((double)num/(double)den);
+}
+
+
+
+
+
+
+
+
