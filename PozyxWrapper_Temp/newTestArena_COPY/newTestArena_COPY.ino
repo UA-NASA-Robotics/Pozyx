@@ -61,6 +61,12 @@ deviceXY device_pos;
 
 double heading;
 int quadrant = 0;
+
+
+
+
+
+
 //Prototypes for functions:
 bool isWithinFloat(double sample, double lowBound, double highBound);
 double filterAngle(double Pozyx, double Angle);
