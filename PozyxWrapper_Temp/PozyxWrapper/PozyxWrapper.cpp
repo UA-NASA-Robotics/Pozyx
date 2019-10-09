@@ -75,9 +75,47 @@ PozyxWrapper::updateDistances()
 
 void PozyxWrapper::updateHeading()
 {
+	//Calculations for heading
     double tan_num = (double)(device_pos.Y) - (double)(remote_pos.Y);
     double tan_den = (double)(remote_pos.X) - (double)(device_pos.X);
     heading = atan(tan_num/tan_den)*RadToPI;
+	
+	//Update quadrant
+	//Q1
+	if(device_pos.X > remote_pos.X && (device_pos.Y < remote_pos.Y))
+	{
+		heading = abs(90 - heading);
+		heading = heading - 10;
+		quadrant = 1;
+	}
+	//Q2
+	else if (device_pos.X > remote_pos.X && (device_pos.Y > remote_pos.Y))
+	{
+		heading = abs(heading) + 90;
+		quadrant = 2;
+	}
+	//Q3
+	else if (device_pos.X < remote_pos.X && (device_pos.Y > remote_pos.Y))
+	{
+		heading = heading + 180;
+		quadrant = 3;
+	}
+	//Q4 (or Q1)
+	else if(device_pos.X < remote_pos.X && (device_pos.Y < remote_pos.Y))
+	{
+		heading = abs(heading);
+		heading = heading + 10;
+		heading = heading + 270;
+		if(heading >= 360)
+		{
+			heading = heading - 360;
+			quadrant = 1;
+		}
+		else
+		{
+			quadrant = 4;
+		}
+	}
 }
 
 //function for adding new value to the buffer (circular buffer)
@@ -126,6 +164,56 @@ void PozyxWrapper::updateCoordinates()
 	
 }
 
+void updateStatus()
+{
+
+    //RANGING WITH DEVICE (BEACON #1 ON THE ROBOT)
+
+    deviceLeftStatus = Pozyx.doRanging(destination_id_1, &deviceLeftRange);
+    deviceRightStatus = Pozyx.doRanging(destination_id_2, &deviceRightRange);
+    
+    if (deviceLeftStatus == POZYX_SUCCESS && deviceRightStatus == POZYX_SUCCESS)
+    { 
+      //Updating the buffers
+      BufferAddVal(DistanceVals1, &Head_1, deviceLeftRange.distance); 
+      BufferAddVal(DistanceVals2, &Head_2, deviceRightRange.distance);
+      //Update tag angle, x, y pos
+      updateTagAngles(getBuffAvg(DistanceVals1), getBuffAvg(DistanceVals2), false); //passing 0 because it's not the remote device
+      //updateTagAngles(deviceLeftRange.distance, deviceRightRange.distance, 0);
+    }
+    //RANGING WITH THE REMOTE DEVICE (BEACON #2 ON THE ROBOT)
+    #ifdef DUAL_POZYX
+
+    remoteLeftStatus = Pozyx.doRemoteRanging(remote_id, destination_id_1, &remoteLeftRange);
+    remoteRightStatus = Pozyx.doRemoteRanging(remote_id, destination_id_2, &remoteRightRange);
+    
+    if(remoteLeftStatus == POZYX_SUCCESS && remoteRightStatus == POZYX_SUCCESS)
+    {
+      //Updating the buffers
+      BufferAddVal(DistanceVals3, &Head_3, remoteLeftRange.distance);
+      BufferAddVal(DistanceVals4, &Head_4, remoteRightRange.distance);
+      
+      //Update tag angle, x, y pos
+      updateTagAngles(getBuffAvg(DistanceVals3), getBuffAvg(DistanceVals4), true); //passing 1 because it's the remote device
+      //updateTagAngles(remoteLeftRange.distance, remoteRightRange.distance, 1);
+    }
+#endif
+}
+
+int updateTagAngles (uint32_t distanceVals1, uint32_t distanceVals2, bool remote_flag)
+{
+  double leftAngle = lawOfCOS(distanceVals1, ANCHORDISPLACEMENT, distanceVals2); 
+  if (remote_flag)
+  {
+    remote_pos.X = ((double)distanceVals1 * cos(leftAngle)); 
+    remote_pos.Y = ((double)distanceVals1 * sin(leftAngle));
+  }
+  else
+  {
+    device_pos.X = ((double)distanceVals1 * cos(leftAngle));
+    device_pos.Y = ((double)distanceVals1 * sin(leftAngle));
+  }
+}
 
 /////////////////////////////////////////////////////////
 //Stuff that prints to terminal; statuses, coords etc.
@@ -199,6 +287,27 @@ void PozyxWrapper::printXYposition()
 //Calculations, mathematical laws, etc. here
 /////////////////////////////////////////////
 
+void calculateCenter()
+{
+  // centerpoint between POZYX sensors on robot
+  mid.X = (device_pos.X + remote_pos.X) / 2;
+  mid.Y = (device_pos.Y + remote_pos.Y) / 2;
+
+  // compute unit vector in direction of robot heading
+  double x_component = remote_pos.X - device_pos.X;
+  double y_component = remote_pos.Y - device_pos.Y;
+  double magnitude = sqrt(pow(x_component, 2) + pow(y_component, 2));
+  double unit_x_component = x_component / magnitude;
+  double unit_y_component = y_component / magnitude;
+  double const VEC_ANGLE = 270;
+  double heading_unit_vector_x = cos(VEC_ANGLE) * unit_x_component - sin(VEC_ANGLE) * unit_y_component;
+  double heading_unit_vector_y = sin(VEC_ANGLE) * unit_x_component + cos(VEC_ANGLE) * unit_y_component;
+
+  // compute robot centroid
+  center.X = mid.X + MID_DIST * heading_unit_vector_x;
+  center.Y = mid.Y + MID_DIST * heading_unit_vector_y;
+}
+
 unsigned long PozyxWrapper::powerOfTwo(unsigned long x)
 {
 	return(x*x);
@@ -220,6 +329,10 @@ double PozyxWrapper::lawOfCOS( uint32_t a, uint32_t b, uint32_t c)
 
    return acos((double)num/(double)den);
 }
+
+
+
+
 
 
 

@@ -11,7 +11,7 @@
 #define MID_DIST 300.0 //set distance to center of robot
 #define TAG_DIST 450.0 //was 460
 #define DUAL_POZYX
-#define DEBUG
+#define DEBUG			//if debugging; else comment out
 #define stdTesting
 #define XYpos
 #define AVERAGEAMOUNT 50
@@ -32,33 +32,36 @@
 
 class PozyxWrapper
 {
-    public:
-        PozyxWrapper(); //default constructor
-        //void boot(); //do I need this?  constructor can do this
-		void printStatus();  //for debugging
-        void updateDistances();		//Needs written under .cpp
-        void updateCoordinates();
-        void updateHeading();
-        void enableGyroAssistance();	//Needs written under .cpp
-        void BufferAddVal(uint32_t *buff, uint8_t *head, uint32_t val);
-        uint32_t getBuffAvg(uint32_t *buff);		//Needs written under .cpp
-		//
-		//
-		//
-		S
-        //return buffer averages of the distances 
+    public:													// + -> added; ++ -> cleaned; +++ -> ready to go
+        PozyxWrapper(); 				//default constructor			//+++
+		void printStatus();  			//for debugging					//+
+        void updateDistances();			//get distances from 			//+
+        void updateCoordinates();		//getter for coords				//+++
+        void updateHeading();			//getter for heading			//++
+        void BufferAddVal(uint32_t *buff, uint8_t *head, uint32_t val);	//++
+        uint32_t getBuffAvg(uint32_t *buff);							//++
+		
+		void calculateCenter();											//+
+		void updateStatus();											//+
+		int updateTagAngles (uint32_t, uint32_t, bool);					//++
+		bool isWithinFloat(double, double, double);						//
+		void printXYposition();											//++
+		
+		
+        //void enableGyroAssistance();									//
+
+		
 		/*/////
 		
 		    Not needed currently.
-        uint32_t getDeviceLeftDistance();	//Needs written under .cpp
-        uint32_t getDeviceRightDistance();	//Needs written under .cpp
-        uint32_t getRemoteLeftDistance();	//Needs written under .cpp
-        uint32_t getRemoteRightDistance();	//Needs written under .cpp
+        uint32_t getDeviceLeftDistance();
+        uint32_t getDeviceRightDistance();	
+        uint32_t getRemoteLeftDistance();
+        uint32_t getRemoteRightDistance();
 		*//////
 		
 		
-		bool isWithinFloat(double, double, double);	//add to .cpp
-		void printXYposition();
+		
 		
     private:
         uint16_t leftAnchorBeaconAddress;
@@ -98,12 +101,6 @@ class PozyxWrapper
 		//////////////////////////////////////////////
 		//////////////////////////////////////////////
 		
-		struct deviceXY{
-		double X;
-		double Y;
-		};
-		deviceXY device_pos;
-
 		double heading;
 		int quadrant = 0;
 
@@ -113,17 +110,9 @@ class PozyxWrapper
 		double lawOfCOS( uint32_t a, uint32_t b, uint32_t c);
 		
 
-        struct status{
-            int deviceToLeft;
-            int deviceToRight;
-            int remoteToLeft;
-            int remoteToRight;
-        };
+        
 
-        typedef struct{
-            double X;
-            double Y;
-        }remotePos, devicePos, centerPos;
+        
         //int deviceLeftStatus, deviceRightStatus, remoteLeftStatus, remoteRightStatus;
 		
 		/*
@@ -140,12 +129,7 @@ class PozyxWrapper
         uint32_t remoteRightDistanceBuffer[bufferCount];
 		*/
 		
-        struct bufferHead{
-            uint8_t deviceLeft;
-            uint8_t deviceRight;
-            uint8_t remoteLeft;
-            uint8_t remoteRight;
-        };
+        
 };
 
 #endif 

@@ -8,17 +8,38 @@ uint32_t deviceLeftDistanceBuffer[bufferCount];
 uint32_t deviceRightDistanceBuffer[bufferCount];
 uint32_t remoteLeftDistanceBuffer[bufferCount];
 uint32_t remoteRightDistanceBuffer[bufferCount];
-        
-device_range_t deviceLeftRange; //change to deviceLeftRange
-device_range_t deviceRightRange; //change to deviceRightRange
-int deviceLeftStatus = 0, deviceRightStatus = 0; //status for connection between device and left and right anchors on collection bin
-//double deviceX, deviceY;
+
+typedef struct{
+            double X;
+            double Y;
+        }remotePos, devicePos, centerPos;
 
 struct deviceXY{
   double X;
   double Y;
 };
 deviceXY device_pos;
+
+struct bufferHead{
+            uint8_t deviceLeft;
+            uint8_t deviceRight;
+            uint8_t remoteLeft;
+            uint8_t remoteRight;
+        };
+
+struct status{
+            int deviceToLeft;
+            int deviceToRight;
+            int remoteToLeft;
+            int remoteToRight;
+        };
+        
+device_range_t deviceLeftRange; //change to deviceLeftRange
+device_range_t deviceRightRange; //change to deviceRightRange
+int deviceLeftStatus = 0, deviceRightStatus = 0; //status for connection between device and left and right anchors on collection bin
+//double deviceX, deviceY;
+
+
 
 double heading;
 int quadrant = 0;
@@ -38,12 +59,26 @@ int quadrant = 0;
   double remoteLeftAngle, remoteRightAngle;  //global variable for storing calculations in updateTagAngles function 
 #endif
 
+
+///////////////////
+///////////////////
+///////////////////
 void setup() {
  Serial.begin(115200);
- 
-
 }
 
 void loop() {
-  
+  PozyxWrapper PozyxWrapper();
+  PozyxWrapper.updateStatus(); //maybe have this run less?
+  PozyxWrapper.printXYpostion();
+  //calculateCenter();
+  //updateHeading();
+      
+  #ifdef DEBUG
+
+    Serial.println(center.X);
+    Serial.println(center.Y);
+    Serial.println(heading);
+  #endif
+      
 }
