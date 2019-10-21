@@ -14,6 +14,8 @@ implemented.
 the main driver code simple and clean. Everything is object-oriented, hence the driver code should primarily
 consist of function calls. The constructor will boot the Pozyx system (i.e. PozyxWrapper Poz; )
 
+  Keep in mind that a lot of the calculations/code have been either taken from previous renditions of the
+Pozyx setup, and that I do not take credit for all of the code written. -Alex
 
 =======================
 === Included files: ===
