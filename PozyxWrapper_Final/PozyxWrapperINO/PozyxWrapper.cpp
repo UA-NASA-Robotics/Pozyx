@@ -9,47 +9,6 @@
 #include <Wire.h>
 #include "PozyxWrapper.h"
 
-PozyxWrapper::PozyxWrapper()
-{
-        
-    if (Pozyx.begin() == POZYX_FAILURE) {
-        #ifdef DEBUG
-        Serial.println("ERROR: Unable to connect to POZYX shield");
-        Serial.println("Reset required");
-        #endif
-        delay(100);
-        abort();
-    }
-    // setting the remote_id back to NULL will use the local Pozyx
-    if (!isRemote) {
-        remote_id = NULL;
-    }
-    #ifdef DEBUG
-    Serial.println("------------POZYX RANGING V1.1------------");
-    Serial.println("NOTES:");
-    Serial.println("- Change the parameters:");
-    Serial.println("\tdestination_id (target device)");
-    Serial.println("\trange_step (mm)");
-    Serial.println();
-    Serial.println("- Approach target device to see range and");
-    Serial.println("led control");
-    Serial.println("------------POZYX RANGING V1.1------------");
-    Serial.println();
-    Serial.println("START Ranging:");
-    #endif
-    // make sure the pozyx system has no control over the LEDs, we're the boss
-    uint8_t led_config = 0x0;
-    Pozyx.setLedConfig(led_config, remote_id);
-    // do the same with the
-    Pozyx.setLedConfig(led_config, destination_id_1);
-    // do the same with the
-    Pozyx.setLedConfig(led_config, destination_id_2);
-    // set the ranging protocol
-    Pozyx.setRangingProtocol(ranging_protocol, remote_id);
-
-    Pozyx.setSensorMode(0, remote_id);
-}
-
 void PozyxWrapper::updateHeading()
 {
   // CALCULATIONS FOR HEADING: CHECK WITH PEERS TO MAKE SURE THIS IS THE CORRECT METHOD
@@ -93,6 +52,48 @@ void PozyxWrapper::updateHeading()
     }
   }
 }
+
+
+void PozyxWrapper::PozyxBoot()
+{
+    if (Pozyx.begin() == POZYX_FAILURE) {
+        #ifdef DEBUG
+        Serial.println("ERROR: Unable to connect to POZYX shield");
+        Serial.println("Reset required");
+        #endif
+        delay(100);
+        abort();
+    }
+    // setting the remote_id back to NULL will use the local Pozyx
+    if (!isRemote) {
+        remote_id = NULL;
+    }
+    #ifdef DEBUG
+    Serial.println("------------POZYX RANGING V1.1------------");
+    Serial.println("NOTES:");
+    Serial.println("- Change the parameters:");
+    Serial.println("\tdestination_id (target device)");
+    Serial.println("\trange_step (mm)");
+    Serial.println();
+    Serial.println("- Approach target device to see range and");
+    Serial.println("led control");
+    Serial.println("------------POZYX RANGING V1.1------------");
+    Serial.println();
+    Serial.println("START Ranging:");
+    #endif
+    // make sure the pozyx system has no control over the LEDs, we're the boss
+    uint8_t led_config = 0x0;
+    Pozyx.setLedConfig(led_config, remote_id);
+    // do the same with the
+    Pozyx.setLedConfig(led_config, destination_id_1);
+    // do the same with the
+    Pozyx.setLedConfig(led_config, destination_id_2);
+    // set the ranging protocol
+    Pozyx.setRangingProtocol(ranging_protocol, remote_id);
+
+    Pozyx.setSensorMode(0, remote_id);
+}
+
 
 void PozyxWrapper::updateStatus()
 {
@@ -173,7 +174,7 @@ void PozyxWrapper::calculateCenter()
   mid_Y = (device_pos_Y + remote_pos_Y) / 2;
 
   //compute unit vector in direction of robot heading
-  double x_component = remote_pos_X - device_pos_Y;
+  double x_component = remote_pos_X - device_pos_X;
   double y_component = remote_pos_Y - device_pos_Y;
   double magnitude = sqrt(pow(x_component, 2) + pow(y_component, 2));
   double unit_x_component = x_component / magnitude;
@@ -193,12 +194,12 @@ void PozyxWrapper::printBasicXY()
   //calculateX1Position();  //Values of X1, X2 are printed during these function calls. The returned values are the 
   //double X2 = calculateX2Position();
 
-  Serial.print("X1: ");
+  /*Serial.print("X1: ");
   calculateX1Position();
   Serial.print("X2: ");
   calculateX2Position();
+  */
   
-  /*
   Serial.print("Device X: ");
   Serial.print(device_pos_X);
   Serial.print("  Y: ");
@@ -211,7 +212,7 @@ void PozyxWrapper::printBasicXY()
   Serial.print(center_X);
   Serial.print(" Y: ");
   Serial.println(center_Y); 
-  */
+  
 }
 
 void PozyxWrapper::updateCoordinates()    //Needs re-worked. Will try something out once header + buffer working as intended
@@ -225,19 +226,15 @@ void PozyxWrapper::updateCoordinates()    //Needs re-worked. Will try something 
 
 
     /*
-
     //calculate X1 position (X coordinate of Pozyx shield on Arduino device on robot)
     devicePos.X = sqrt(-1*powerOfTwo(((b*b)-(u*u)-(d*d))/(-2*u))+(unsigned long)(d*d));
-
     //calculate X2 position (X coordinate of remote Pozyx beacon on robot)
     remotePos.X = (sqrt(-1*powerOfTwo(((a*a)-(u*u)-(c*c))/(-2*u))+(unsigned long)(c*c)));
-
     //calculate Y1 position (shield on arduino)
     devicePos.Y = ((d*d) - (b*b) + (u*u))/(2*u);
   
     //calculate Y2 position (remote beacon)
     remotePos.Y = ((c*c)-(a*a)+(u*u))/(2*u);
-
     */
 }
 
@@ -313,7 +310,15 @@ double PozyxWrapper::lawOfCOS( uint32_t a, uint32_t b, uint32_t c)
 }
 
 
-
+void PozyxWrapper::printCH()
+{
+  Serial.print("Center X: ");
+  Serial.println(center_X);
+  Serial.print("Center Y: ");
+  Serial.println(center_Y);
+  Serial.print("HEADING: ");
+  Serial.println(heading);
+}
 
 
 
@@ -322,21 +327,18 @@ double PozyxWrapper::lawOfCOS( uint32_t a, uint32_t b, uint32_t c)
 
 
 /*
-
 void PozyxWrapper::updateDistances()
 {
     deviceLeftStatus = Pozyx.doRanging(destination_id_1, &deviceLeftRange);
     deviceRightStatus = Pozyx.doRanging(destination_id_2, &deviceRightRange);
     remoteLeftStatus = Pozyx.doRemoteRanging(remote_id, destination_id_1, &remoteLeftRange);
     remoteRightStatus = Pozyx.doRemoteRanging(remote_id, destination_id_2, &remoteRightRange);
-
     if (deviceLeftStatus == POZYX_SUCCESS && deviceRightStatus == POZYX_SUCCESS)
     {
         //Updating the buffers
         BufferAddVal(deviceLeftDistanceBuffer, &bufferHead.deviceLeft, deviceLeftRange.distance); 
         BufferAddVal(deviceRightDistanceBuffer, &bufferHead.deviceRight, deviceRightRange.distance);
     }
-
 #ifdef isRemote
     if (remoteLeftStatus == POZYX_SUCCESS && remoteRightStatus == POZYX_SUCCESS)
     {
@@ -345,8 +347,4 @@ void PozyxWrapper::updateDistances()
     }
 #endif 
 }
-
-
-
-
 */

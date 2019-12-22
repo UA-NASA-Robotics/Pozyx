@@ -20,13 +20,14 @@
 class PozyxWrapper
 {
     public:
-        PozyxWrapper(); //default constructor
+        void PozyxBoot();           //Boots up Pozyx System, RUN THIS IN SETUP.
         void updateCoordinates();   //Mesh together calculateX1, X2, Y1 and Y2 methods together here  -> not in use quite yet (uses typedef struct; allocate to a namespace?)
         double calculateX1Position();
         double calculateX2Position();
         double calculateY1Position();
         double calculateY2Position();
         void printBasicXY();
+        void printCH();
         void updateStatus();
         void updateHeading();
         void BufferAddVal(uint32_t *buff, uint8_t *head, uint32_t val);
@@ -34,6 +35,7 @@ class PozyxWrapper
         int updateTagAngles(uint32_t distanceVals1, uint32_t distanceVals2, bool remote_flag);
         uint32_t getBuffAvg(uint32_t *buff);
         
+        void calculateCenter();
         
     private:
         uint16_t remote_id = 0x6751;// the network ID of the remote device
@@ -84,8 +86,6 @@ class PozyxWrapper
           
         #endif
 
-        
-        void calculateCenter();
         unsigned long powerOfTwo(unsigned long x);
         double lawOfCOS( uint32_t a, uint32_t b, uint32_t c);
 };
