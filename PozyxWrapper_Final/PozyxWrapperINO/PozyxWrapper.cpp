@@ -12,35 +12,16 @@
 void PozyxWrapper::updateHeading()
 {
   // CALCULATIONS FOR HEADING: CHECK WITH PEERS TO MAKE SURE THIS IS THE CORRECT METHOD
-  double tan_num = (double)(device_pos_X) - (double)(remote_pos_Y);
-  double tan_den = (double)(remote_pos_X) - (double)(device_pos_X);
-  heading = atan(tan_num / tan_den) * RadToPi;  //RadToPi defined in PozyxWrapper.h
+  double tan_num = (double)(center_X) - (double)(mid_X);
+  double tan_den = (double)(center_Y) - (double)(mid_Y);
+  heading = abs(atan(tan_num / tan_den) * RadToPi);  //RadToPi defined in PozyxWrapper.h
 
-  //Quad 1
-  if(device_pos_X > remote_pos_X && (device_pos_Y < remote_pos_Y))
+  //Quad 1 -> 4
+  if(center_X > mid_X && (center_Y < mid_Y))
   {
-    heading = abs(90 - heading);
-    heading = heading - 10;
-    quadrant = 1;
-  }
-  //Quad 2
-  else if(device_pos_X > remote_pos_X && (device_pos_Y > remote_pos_Y))
-  {
-    heading = abs(heading) + 90;
-    quadrant = 2;
-  }
-  //Quad 3
-  else if(device_pos_X < remote_pos_X && (device_pos_Y > remote_pos_Y))
-  {
-      heading = heading + 180;
-      quadrant = 3;
-  }
-  //Quad 4
-  else if(device_pos_X < remote_pos_X && (device_pos_Y < remote_pos_Y))
-  {
-    heading = abs(heading);
-    heading = heading + 10;
+
     heading = heading + 270;
+    heading = heading + 10;
     if(heading >= 360)
     {
       heading = heading - 360;
@@ -50,7 +31,32 @@ void PozyxWrapper::updateHeading()
     {
       quadrant = 4;
     }
+    
+    quadrant = 4;
   }
+  //Quad 2 -> 1
+  else if(center_X > mid_X && (center_Y > mid_Y))
+  {
+    heading = abs(90 - heading); //quad1
+    heading = heading + 10;
+    quadrant = 1;
+  }
+  //Quad 3 -> 2
+  else if(center_X < mid_X && (center_Y > mid_Y))
+  {
+      heading = abs(heading) + 90;
+      heading = heading + 10;
+      quadrant = 2;
+  }
+  //Quad 4 -> 3
+  else if(center_X < mid_X && (center_Y < mid_Y))
+  {
+    heading = 90 - heading + 180;
+  heading = heading + 10;
+    
+    quadrant = 3;
+  }
+
 }
 
 
@@ -174,18 +180,35 @@ void PozyxWrapper::calculateCenter()
   mid_Y = (device_pos_Y + remote_pos_Y) / 2;
 
   //compute unit vector in direction of robot heading
-  double x_component = remote_pos_X - device_pos_X;
-  double y_component = remote_pos_Y - device_pos_Y;
+  double x_component = (remote_pos_X - device_pos_X);     
+  double y_component = (remote_pos_Y - device_pos_Y);
+  
+  center_X =  mid_X - ((MID_DIST * y_component) / TAG_DIST);
+  center_Y =  mid_Y + ((MID_DIST * x_component) / TAG_DIST);
+
+
+
+  /*  OLD METHOD, for reference
+
   double magnitude = sqrt(pow(x_component, 2) + pow(y_component, 2));
+  Now defined in Header
+
+  
   double unit_x_component = x_component / magnitude;
   double unit_y_component = y_component / magnitude;
-  double const VEC_ANGLE = 270; //define in header?
+  
+  double const VEC_ANGLE = 270; //FIX THIS; needs to be dynamic value;    270 deg = 4.71239 rad  for reference
+
+  
   double heading_unit_vector_x = cos(VEC_ANGLE) * unit_x_component - sin(VEC_ANGLE) * unit_y_component;
   double heading_unit_vector_y = sin(VEC_ANGLE) * unit_x_component + cos(VEC_ANGLE) * unit_y_component;
 
   //compute robot centroid
   center_X = mid_X + MID_DIST * heading_unit_vector_x;
   center_Y = mid_Y + MID_DIST * heading_unit_vector_y;
+  
+  */
+  
 }
 
 void PozyxWrapper::printBasicXY()
@@ -320,7 +343,34 @@ void PozyxWrapper::printCH()
   Serial.println(heading);
 }
 
+// GYRO IMPLEMENTATION //
+/*
+void calibrateGyro()
+{
+  long sumY = 0;
+  for(int i = 0; i < Samples; ++i)
+  {
+    Pozyx.regRead(POZYX_GYRO_X, (uint8_t*)&gyro_raw, 3*sizeof(int16_t));
+    sumY += gyro_raw[1];
+    //Keep track of the highest values
+    
+    if(gyro_raw[1]>highG_y)      highG_y=gyro_raw[1];
+    //Keep track of the lowest values
+    if(gyro_raw[1]<lowG_y)       lowG_y=gyro_raw[1];
+   
+  }
+  offsetG_Y = sumY / Samples;
+  highG_y -= offsetG_Y;
+  lowG_y  -= offsetG_Y;
+  
+}
 
+
+
+
+
+
+*/
 
 
 

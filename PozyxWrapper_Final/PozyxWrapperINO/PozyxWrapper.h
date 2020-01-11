@@ -10,7 +10,9 @@
 #define ANCHORDISPLACEMENT  1600 //predefined distance between anchors on collection bin, in mm (was 1700)
 #define MID_DIST 300.0 //set distance to center of robot
 #define TAG_DIST 450.0 //was 460
-#define AVERAGEAMOUNT 50//changed, needed more memory
+#define magnitude TAG_DIST
+
+#define AVERAGEAMOUNT 20//changed, needed more memory
 
 /*
  *  I PLAN ON WRITING A README FILE THAT BRIEFLY EXPLAINS WHAT EACH FUNCTION DOES AND PUSH IT ONTO THE REPO -Alex 
@@ -31,6 +33,8 @@ class PozyxWrapper
         void updateStatus();
         void updateHeading();
         void BufferAddVal(uint32_t *buff, uint8_t *head, uint32_t val);
+
+        void calibrateGyro();
         
         int updateTagAngles(uint32_t distanceVals1, uint32_t distanceVals2, bool remote_flag);
         uint32_t getBuffAvg(uint32_t *buff);
