@@ -128,7 +128,9 @@ void PozyxWrapper::updateStatus()
   }
   else
   {
+    #ifdef DEBUG
     Serial.println("Error in 'UPDATESTATUS' for REMOTE. Cause: remoteLeftStatus a/or remoteRightStatus failure");
+    #endif
   }
 
 
@@ -222,7 +224,7 @@ void PozyxWrapper::printBasicXY()
   Serial.print("X2: ");
   calculateX2Position();
   */
-  
+  #ifdef DEBUG
   Serial.print("Device X: ");
   Serial.print(device_pos_X);
   Serial.print("  Y: ");
@@ -235,6 +237,7 @@ void PozyxWrapper::printBasicXY()
   Serial.print(center_X);
   Serial.print(" Y: ");
   Serial.println(center_Y); 
+  #endif
   
 }
 
@@ -271,7 +274,9 @@ double PozyxWrapper::calculateX1Position()
   unsigned long squareThis = ((b*b)-(u*u)-(d*d))/(-2*u);
   unsigned long squared = powerOfTwo(squareThis);
   unsigned long secVal = -1*squared+(unsigned long)(d*d);
+  #ifdef DEBUG
   Serial.println(sqrt(-1*powerOfTwo(((b*b)-(u*u)-(d*d))/(-2*u))+(unsigned long)(d*d)));
+  #endif
   return sqrt(secVal);
 }
 
@@ -285,8 +290,9 @@ double PozyxWrapper::calculateX2Position()
   unsigned long squareThis = ((a*a)-(u*u)-(c*c))/(-2*u);
   unsigned long squared = powerOfTwo(squareThis);
   unsigned long secVal = -1*squared+(unsigned long)(c*c);
-
+#ifdef DEBUG
   Serial.println(sqrt(-1*powerOfTwo(((a*a)-(u*u)-(c*c))/(-2*u))+(unsigned long)(c*c)));
+  #endif
   return sqrt(secVal);
   
 }
@@ -332,15 +338,31 @@ double PozyxWrapper::lawOfCOS( uint32_t a, uint32_t b, uint32_t c)
    return acos((double)num/(double)den);
 }
 
-
+int lastTime = 0;
 void PozyxWrapper::printCH()
 {
+  #ifdef DEBUG
   Serial.print("Center X: ");
   Serial.println(center_X);
   Serial.print("Center Y: ");
   Serial.println(center_Y);
   Serial.print("HEADING: ");
   Serial.println(heading);
+  #endif
+  // Transmitting the information to the master Controller
+  #ifdef FASTTRANSFER && !DEBUG
+  //Sending the message periodically
+  if((lastTime - millis()) > 100)
+  {
+    // Loading the info for fasttransfer
+    Send.ToSend(1, center_X);
+    Send.ToSend(2, center_Y);
+    Send.ToSend(3, HEADING);
+    // Sending....
+    Send.sendData(5);
+    lastTime = millis();
+  }
+  #endif
 }
 
 // GYRO IMPLEMENTATION //
