@@ -348,7 +348,10 @@ void PozyxWrapper::printCH()
   Serial.println(center_Y);
   Serial.print("HEADING: ");
   Serial.println(heading);
+  Serial.print("GYRO ASSISTED HEADING: ");
+  Serial.println(currentHeading);
   #endif
+  
   // Transmitting the information to the master Controller
   #ifdef FASTTRANSFER && !DEBUG
   //Sending the message periodically
@@ -365,12 +368,18 @@ void PozyxWrapper::printCH()
   #endif
 }
 
+void PozyxWrapper::printGyro()
+{
+  Serial.print("GYRO ASSISTED HEADING: ");
+  Serial.println(currentHeading);
+}
+
 // GYRO IMPLEMENTATION //
-/*
-void calibrateGyro()
+
+void PozyxWrapper::calibrateGyro()
 {
   long sumY = 0;
-  for(int i = 0; i < Samples; ++i)
+  for(int i = 0; i< Samples; i++)
   {
     Pozyx.regRead(POZYX_GYRO_X, (uint8_t*)&gyro_raw, 3*sizeof(int16_t));
     sumY += gyro_raw[1];
@@ -384,17 +393,108 @@ void calibrateGyro()
   offsetG_Y = sumY / Samples;
   highG_y -= offsetG_Y;
   lowG_y  -= offsetG_Y;
-  
 }
 
+void PozyxWrapper::adjustHeading()
+{
+  if (abs(millis() - previousMillis) > interval) 
+      {
+          //update pozyx angle
+          updateHeading();
+           if(isnan(heading))
+           {
+           flag = 0;
+           }
+           else{
+              flag = 1;
+           }
+          //reset gyro offset
+          if(flag)
+          {
+            yAngle = 0;
+          }
+          previousMillis = millis();
+      } 
 
+      lastyAngle = yAngle;
+      //obtain the gyro offset
+      if((abs(lastMillis - millis())) > 10)
+      {
+          Pozyx.regRead(POZYX_GYRO_X, (uint8_t*)&gyro_raw, 3*sizeof(int16_t));
+          gyroYDPS =  gyro_raw[1]- offsetG_Y;
+          if(isWithinFloat(gyroYDPS,lowG_y*1.1,highG_y*1.1))
+             gyroYDPS=0;  
+          yAngle += ((double)gyroYDPS*SCALING_GYRO * ((millis()-lastMillis)/1000.0)/16);
+          
+          lastMillis = millis();
+      } 
+       //add the gyro offset to the current heading
+      if(flag){
+      
+         currentHeading = heading + yAngle;
+      }
+      else{
+         #ifdef DEBUG
+         Serial.println("currentHEADING UPDATED");
+         Serial.println(currentHeading);
+         Serial.println("yAngle");
+         Serial.println(yAngle);
+         #endif
+         currentHeading = currentHeading + yAngle; //update the heading with only the gyro offset
+      }
+      #ifdef DEBUG
+      Serial.println("flag");
+      Serial.println(flag);
+      Serial.print("CURRENT HEADING: ");
+      Serial.println(currentHeading);
+      Serial.print("calculated heading: ");
+      Serial.println(heading); //we're good!
+      #endif 
 
+      //fastransfer send data to master
+      // master address is 4
+      // to load data in to FT send buffer use toSend(what index, data)
+      // to send the data use sendData(address of receiver)
+      // we need to send this info at 1 sec interval
+      // use an if statemnet that will compare to current time to last time we send data
+      // you want to use millis()
+      #ifdef FASTTRANSFER
+      if (abs(millis()-lastFTMillis) > 500)
+      {
+        //Send.ToSend(1, (int)(center.X/10)); //divide by 10 because we want to send in centimeters
+        //Send.ToSend(2, (int)(center.Y/10)); //divide by 10 because we want to send in centimeters
+        //Send.ToSend(3, (int)(currentHeading));
+        Send.ToSend(1, (int)(mid.X));
+        Send.ToSend(2, (int)(mid.Y));
+        Send.ToSend(3, (int)(currentHeading));
+        Send.sendData(5);
+        lastFTMillis = millis();
+      }
+      #endif
+}
 
+bool PozyxWrapper::isWithinFloat(double sample, double lowBound, double highBound)
+{
+    return (sample > lowBound && sample < highBound);
+}
 
-
-*/
-
-
+//NOT REALLY NEEDED CURRENTLY, REMOVE SOON IF NO USAGE
+int variance(uint32_t a[], int n) 
+{ 
+    // Compute mean (average of elements) 
+    int sum = 0; 
+    for (int i = 0; i < n; i++) 
+        sum += a[i]; 
+    double mean = (double)sum / (double)n; 
+    
+    // Compute sum squared  
+    // differences with mean. 
+    double sqDiff = 0; 
+    for (int i = 0; i < n; i++)  
+        sqDiff += (a[i] - mean) *  
+                  (a[i] - mean); 
+    return sqDiff / n; 
+}
 
 
 

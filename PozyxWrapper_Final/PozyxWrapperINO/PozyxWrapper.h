@@ -1,8 +1,11 @@
-// Interface file for Pozyx functions I will create
+// Interface file for Pozyx functions
 #ifndef PozyxWrapper_h
 #define PozyxWrapper_h
 
 #include "Arduino.h"
+
+//#define FASTTRANSFER
+//#define DEBUG
 
 #define DUAL_POZYX  //define if using remote + shield; else comment out!
 #define isRemote true
@@ -11,13 +14,11 @@
 #define MID_DIST 300.0 //set distance to center of robot
 #define TAG_DIST 450.0 //was 460
 #define magnitude TAG_DIST
+#define Samples 50
+#define SCALING_GYRO 0.9 // 0.0151
+
 
 #define AVERAGEAMOUNT 20//changed, needed more memory
-
-/*
- *  I PLAN ON WRITING A README FILE THAT BRIEFLY EXPLAINS WHAT EACH FUNCTION DOES AND PUSH IT ONTO THE REPO -Alex 
- * 
- */
  
 class PozyxWrapper
 {
@@ -30,11 +31,13 @@ class PozyxWrapper
         double calculateY2Position();
         void printBasicXY();
         void printCH();
+        void printGyro();
         void updateStatus();
         void updateHeading();
         void BufferAddVal(uint32_t *buff, uint8_t *head, uint32_t val);
 
         void calibrateGyro();
+        void adjustHeading();
         
         int updateTagAngles(uint32_t distanceVals1, uint32_t distanceVals2, bool remote_flag);
         uint32_t getBuffAvg(uint32_t *buff);
@@ -92,6 +95,26 @@ class PozyxWrapper
 
         unsigned long powerOfTwo(unsigned long x);
         double lawOfCOS( uint32_t a, uint32_t b, uint32_t c);
+
+        //GYRO STUFF
+        int16_t gyro_raw[3];
+        long offsetG_Y;
+        int gyroYDPS;
+        int highG_y = -5000;
+        int lowG_y = 0;
+        long lastMillis;
+        double yAngle = 0;
+        double lastyAngle = 0;
+        bool flag = 1;
+        unsigned long previousMillis = 0;
+        unsigned long interval = 50;
+        double currentHeading = 0;
+        int count = 0;
+
+        
+        int variance(uint32_t a[], int n);
+        bool isWithinFloat(double sample, double lowBound, double highBound);
+        
 };
 
 #endif 
