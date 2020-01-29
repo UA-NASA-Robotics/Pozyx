@@ -14,8 +14,7 @@
  *  TO-DO:
  *   -Clean up and combine a few leftover functions
  */
-//#define FASTTRANSFER
-#define DEBUG
+
 PozyxWrapper Poz;
 
 
@@ -34,6 +33,7 @@ void loop() {
   #endif
   
   Poz.updateStatus(); //Need to run this to collect distance data.
+  Poz.updateCoordinates();
   Poz.calculateCenter();   //try using this within updateStatus
   
   Poz.updateHeading();

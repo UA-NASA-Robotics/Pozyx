@@ -15,10 +15,10 @@
 #define TAG_DIST 470.0 //was 460
 #define magnitude TAG_DIST
 #define Samples 50
-#define SCALING_GYRO 0.9 // 0.0151
+#define SCALING_GYRO 0.93 // 0.0151
 
-#define AVERAGEAMOUNT 15//changed, needed more memory
 
+#define AVERAGEAMOUNT 10//changed, needed more memory
  
 class PozyxWrapper
 {
@@ -101,7 +101,7 @@ class PozyxWrapper
         long offsetG_Y;
         int gyroYDPS;
         int highG_y = -5000;
-        int lowG_y = 0;
+        int lowG_y = 5000;
         long lastMillis;
         double yAngle = 0;
         double lastyAngle = 0;
