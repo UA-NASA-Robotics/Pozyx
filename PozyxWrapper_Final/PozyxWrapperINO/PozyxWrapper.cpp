@@ -7,61 +7,82 @@
 #include <Pozyx.h>
 #include <Pozyx_definitions.h>
 #include <Wire.h>
+#include <FastTransfer.h>
 #include "PozyxWrapper.h"
+#include <math.h>
+//#define DEBUG
+#define FASTTRANSFER
+FastTransfer Send;
 
+int receiveArray[3];
+double headingAvg[10];
 void PozyxWrapper::updateHeading()
 {
   // CALCULATIONS FOR HEADING: CHECK WITH PEERS TO MAKE SURE THIS IS THE CORRECT METHOD
-  double tan_num = (double)(center_X) - (double)(mid_X);
-  double tan_den = (double)(center_Y) - (double)(mid_Y);
-  heading = abs(atan(tan_num / tan_den) * RadToPi);  //RadToPi defined in PozyxWrapper.h
-
+//  double tan_num = (double)(center_X) - (double)(mid_X);
+//  double tan_den = (double)(center_Y) - (double)(mid_Y);
+    double tan_num = (double)(device_pos_X)- (double)(remote_pos_X);
+    double tan_den = (double)(device_pos_Y)- (double)(remote_pos_Y);
+    heading = atan(tan_num / tan_den) * (180/PI);  //RadToPi defined in PozyxWrapper.
+//    double sum = 0;
+//    int i;
+//    for(i=0;i<9;i++){
+//        sum +=headingAvg[i];
+//        headingAvg[i] = headingAvg[i+1];
+//    }
+//    headingAvg[9] = heading;
+//    sum += headingAvg[9];
+//    heading = sum/10;
+    
   //Quad 1 -> 4
-  if(center_X > mid_X && (center_Y < mid_Y))
+  if(device_pos_X > remote_pos_X && (device_pos_Y < remote_pos_Y))
   {
 
-    heading = heading + 270;
-    heading = heading + 10;
-    if(heading >= 360)
-    {
-      heading = heading - 360;
-      quadrant = 1;
-    }
-    else
-    {
-      quadrant = 4;
-    }
-    
-    quadrant = 4;
+    heading = 180 + abs(heading);
+    //heading = heading + 10;
+//    if(heading >= 360)
+//    {
+//      heading = heading - 360;
+//      quadrant = 1;
+//    }
+//    else
+//    {
+//      quadrant = 4;
+//    }
+//    
+    quadrant = 3;
   }
   //Quad 2 -> 1
-  else if(center_X > mid_X && (center_Y > mid_Y))
+  else if(device_pos_X > remote_pos_X && (device_pos_Y > remote_pos_Y))
   {
-    heading = abs(90 - heading); //quad1
-    heading = heading + 10;
-    quadrant = 1;
+    heading = 270 +(90 -heading); //quad1
+    //heading = heading + 10;
+    quadrant = 4;
   }
   //Quad 3 -> 2
-  else if(center_X < mid_X && (center_Y > mid_Y))
+  else if(device_pos_X < remote_pos_X && (device_pos_Y > remote_pos_Y))
   {
-      heading = abs(heading) + 90;
-      heading = heading + 10;
-      quadrant = 2;
+      heading = abs(heading);
+      //heading = heading + 10;
+      quadrant = 1;
   }
   //Quad 4 -> 3
-  else if(center_X < mid_X && (center_Y < mid_Y))
+  else if(device_pos_X < remote_pos_X && (device_pos_Y < remote_pos_Y))
   {
-    heading = 90 - heading + 180;
-  heading = heading + 10;
+    heading = 90 - heading + 90 ;
+  //heading = heading + 10;
     
     quadrant = 3;
   }
-
+  Serial.print("Quad: ");Serial.println(quadrant);
 }
 
 
 void PozyxWrapper::PozyxBoot()
 {
+  #ifdef FASTTRANSFER
+  Send.begin(Details(receiveArray), 8, false, &Serial);
+  #endif
     if (Pozyx.begin() == POZYX_FAILURE) {
         #ifdef DEBUG
         Serial.println("ERROR: Unable to connect to POZYX shield");
@@ -353,14 +374,16 @@ void PozyxWrapper::printCH()
   #endif
   
   // Transmitting the information to the master Controller
-  #ifdef FASTTRANSFER && !DEBUG
+  
+  #ifdef FASTTRANSFER
+   
   //Sending the message periodically
-  if((lastTime - millis()) > 100)
+  if(abs(lastTime - millis()) > 500)
   {
     // Loading the info for fasttransfer
     Send.ToSend(1, center_X);
     Send.ToSend(2, center_Y);
-    Send.ToSend(3, HEADING);
+    Send.ToSend(3, heading);
     // Sending....
     Send.sendData(5);
     lastTime = millis();

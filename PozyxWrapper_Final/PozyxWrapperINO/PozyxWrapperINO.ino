@@ -3,24 +3,26 @@
 #include <Pozyx.h>
 #include <Pozyx_definitions.h>
 #include <Wire.h>
+
+//#define DEBUG
+
+#define FASTTRANSFER
+
 #include "PozyxWrapper.h"
 
 /*
  *  TO-DO:
  *   -Clean up and combine a few leftover functions
  */
- 
-#define DEBUG
 //#define FASTTRANSFER
+#define DEBUG
 PozyxWrapper Poz;
-FastTransfer Send;
-int receiveArray[3];
+
 
 void setup() {
   Serial.begin(115200);
   Poz.PozyxBoot();
   Poz.calibrateGyro();  //initialize gyro calibration
-  Send.begin(Details(receiveArray), 8, false, &Serial);
 }
 
 

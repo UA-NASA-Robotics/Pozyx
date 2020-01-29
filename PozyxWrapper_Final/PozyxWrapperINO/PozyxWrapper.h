@@ -12,13 +12,13 @@
 #define RadToPi 57.2957795131
 #define ANCHORDISPLACEMENT  1600 //predefined distance between anchors on collection bin, in mm (was 1700)
 #define MID_DIST 300.0 //set distance to center of robot
-#define TAG_DIST 450.0 //was 460
+#define TAG_DIST 470.0 //was 460
 #define magnitude TAG_DIST
 #define Samples 50
 #define SCALING_GYRO 0.9 // 0.0151
 
+#define AVERAGEAMOUNT 15//changed, needed more memory
 
-#define AVERAGEAMOUNT 20//changed, needed more memory
  
 class PozyxWrapper
 {
